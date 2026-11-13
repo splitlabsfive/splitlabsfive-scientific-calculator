@@ -110,7 +110,7 @@ fun CalculatorScreen() {
             .padding(8.dp)
     ) {
         ModeBar(state)
-        Display(state)
+        Display(state, modifier = Modifier.weight(1f))
         Keypad(state)
     }
 }
@@ -141,12 +141,11 @@ private fun ModeBar(state: CalculatorState) {
 }
 
 @Composable
-private fun Display(state: CalculatorState) {
+private fun Display(state: CalculatorState, modifier: Modifier = Modifier) {
     val preview = state.preview()
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .weight(1f)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.End,
         verticalArrangement = Arrangement.Bottom

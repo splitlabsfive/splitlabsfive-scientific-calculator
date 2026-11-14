@@ -28,9 +28,15 @@ jobs:
       - name: Build debug APK
         run: gradle assembleDebug --no-daemon
 
+      - name: Rename APK with build number
+        run: |
+          BUILD_NUM=$(printf '%03d' '${{ github.run_number }}')
+          mv app/build/outputs/apk/debug/app-debug.apk \
+            "app/build/outputs/apk/debug/SciCalc-${BUILD_NUM}-debug.apk"
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: calculator-debug-apk
+          name: calculator-debug-apk-${{ github.run_number }}
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error

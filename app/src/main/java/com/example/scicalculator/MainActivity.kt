@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -107,6 +108,7 @@ fun CalculatorScreen() {
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .systemBarsPadding()
             .padding(8.dp)
     ) {
         ModeBar(state)
@@ -227,11 +229,11 @@ private fun Keypad(state: CalculatorState) {
         ),
     )
 
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
         keys.forEach { rowKeys ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(5.dp)
             ) {
                 rowKeys.forEach { key ->
                     KeyButton(key, modifier = Modifier.weight(1f), state = state)
@@ -264,7 +266,7 @@ private fun KeyButton(key: Key, modifier: Modifier, state: CalculatorState) {
             colors = ButtonDefaults.buttonColors(containerColor = container, contentColor = content),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp)
+                .height(48.dp)
         ) {
             Text(text = key.label, fontSize = 18.sp, maxLines = 1)
         }

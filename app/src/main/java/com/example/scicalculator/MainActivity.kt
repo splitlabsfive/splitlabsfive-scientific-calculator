@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,14 +37,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.scicalculator.calculator.AngleMode
 import com.example.scicalculator.calculator.Evaluator
+import com.example.scicalculator.calculator.HistoryEntry
+import com.example.scicalculator.calculator.HistoryStore
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val historyStore = HistoryStore(this)
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    CalculatorScreen()
+                    CalculatorScreen(historyStore)
                 }
             }
         }
@@ -70,6 +74,9 @@ private class CalculatorState {
     var secondFunc by mutableStateOf(false)
     var ans by mutableStateOf("0")
     var pendingInsert: String = ""
+    var history by mutableStateOf(listOf<HistoryEntry>())
+    var showHistory by mutableStateOf(false)
+    var historyStore: HistoryStore? = null
 
     fun clear() {
         expression = ""
@@ -88,6 +95,8 @@ private class CalculatorState {
         result = outcome.getOrElse { "Error" }
         if (outcome.isSuccess) {
             ans = result
+            history = listOf(HistoryEntry(expression, result)) + history
+            historyStore?.save(history)
             expression = result
         }
     }
@@ -101,8 +110,12 @@ private class CalculatorState {
 }
 
 @Composable
-fun CalculatorScreen() {
-    val state = remember { CalculatorState() }
+fun CalculatorScreen(historyStore: HistoryStore? = null) {
+    val state = remember {
+        CalculatorState()
+            .also { it.history = historyStore?.load() ?: emptyList() }
+            .also { it.historyStore = historyStore }
+    }
 
     Column(
         modifier = Modifier
@@ -113,6 +126,9 @@ fun CalculatorScreen() {
     ) {
         ModeBar(state)
         Display(state, modifier = Modifier.weight(1f))
+        if (state.showHistory) {
+            HistoryPanel(state)
+        }
         Keypad(state)
     }
 }
@@ -138,6 +154,85 @@ private fun ModeBar(state: CalculatorState) {
                 if (state.angleMode == AngleMode.DEG) "DEG" else "RAD",
                 color = MaterialTheme.colorScheme.primary
             )
+        }
+        TextButton(onClick = { state.showHistory = !state.showHistory }) {
+            Text(
+                if (state.showHistory) "Hide history" else "History",
+                color = if (state.showHistory) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onBackground
+            )
+        }
+    }
+}
+
+@Composable
+private fun HistoryPanel(state: CalculatorState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(190.dp)
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                RoundedCornerShape(12.dp)
+            )
+            .padding(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "History",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+            Text(
+                text = "Clear",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.clickable {
+                    state.history = emptyList()
+                    state.historyStore?.save(state.history)
+                }
+            )
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+        ) {
+            if (state.history.isEmpty()) {
+                Text(
+                    text = "No calculations yet",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+            }
+            state.history.forEach { entry ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { state.expression = entry.result }
+                        .padding(vertical = 6.dp, horizontal = 4.dp)
+                ) {
+                    Text(
+                        text = entry.expression,
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                        maxLines = 1
+                    )
+                    Text(
+                        text = "= ${entry.result}",
+                        fontSize = 17.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1
+                    )
+                }
+            }
         }
     }
 }
